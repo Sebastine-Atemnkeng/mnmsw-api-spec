@@ -1,10 +1,6 @@
 pipeline {
-    agent {
-        docker {
-            image 'san21doc/maven-docker-agent:v1'
-            args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
+    
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         DOCKER_REPO = 'sebastine/project-tsukinome-${env.BRANCH_NAME}'  // Docker repo based on branch name
