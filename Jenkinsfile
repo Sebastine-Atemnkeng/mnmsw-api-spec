@@ -1,6 +1,6 @@
 pipeline {
     agent any
-    
+
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         DOCKER_REPO = 'sebastine/project-tsukinome-${env.BRANCH_NAME}'  // Docker repo based on branch name
@@ -23,6 +23,8 @@ pipeline {
             steps {
                 sh """
                     # Installing dependencies for the users feature
+                    python3 -m venv venv
+                    source venv/bin/activate
                     pip install -r requirements.txt
                 """
             }
