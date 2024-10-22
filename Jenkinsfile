@@ -24,7 +24,8 @@ pipeline {
                 sh """
                     # Installing dependencies for the users feature
                     python3 -m venv venv
-                    bash -c "source venv/bin/activate && pip install -r requirements.txt"
+                    . venv/bin/activate
+                    pip install -r requirements.txt                
                 """
             }
         }
