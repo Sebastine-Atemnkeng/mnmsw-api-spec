@@ -34,6 +34,7 @@ pipeline {
             steps {
                 sh """
                     # Running unit tests with pytest (or your test framework)
+                    source venv/bin/activate
                     pytest --junitxml=test-results.xml
                 """
             }
