@@ -1,0 +1,1 @@
+# mnmsw-api-spec
