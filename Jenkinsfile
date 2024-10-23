@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        DOCKER_REPO = 'sebastine/project-tsukinome-${env.BRANCH_NAME}'  // Docker repo based on branch name
         APP_NAME = 'users'
         IMAGE_TAG = 'latest'
     }
@@ -14,7 +13,7 @@ pipeline {
                 script {
                     // Checkout the code and capture the branch name
                     checkout([$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/Sebastine-Atemnkeng/mnmsw-api-spec.git']]])
-                    env.BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    env.BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim().toLowerCase()
                 }
             }
         }
@@ -62,20 +61,24 @@ pipeline {
                 }
             }
         }
+
         stage('Build and Push Docker Image') {
-            environment {
-                DOCKER_IMAGE = "sebastine/project-tsukinome-${env.BRANCH_NAME}:${BUILD_NUMBER}"
-                REGISTRY_CREDENTIALS = credentials('dockerhub')
-            }
             steps {
                 script {
-                    sh 'docker build -t ${DOCKER_IMAGE} .'
-                    def dockerImage = docker.image("${DOCKER_IMAGE}")
+                    // Defining the Docker repo name dynamically using the lowercase branch name
+                    def dockerRepo = "sebastine/project-tsukinome-${env.BRANCH_NAME}:${BUILD_NUMBER}"
+
+                    // Build Docker image
+                    sh "docker build -t ${dockerRepo} ."
+
+                    // Push Docker image to the registry
+                    def dockerImage = docker.image("${dockerRepo}")
                     docker.withRegistry('https://index.docker.io/v1/', "dockerhub") {
                         dockerImage.push()
                     }
-                    // Optionally clean up
-                    sh 'docker rmi ${DOCKER_IMAGE} || true'
+
+                    // Optionally clean up the local Docker image
+                    sh "docker rmi ${dockerRepo} || true"
                 }
             }
         }
