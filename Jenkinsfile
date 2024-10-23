@@ -98,7 +98,7 @@ pipeline {
                 ]
                 def buildResult = currentBuild.currentResult
                 def color = colorMap[buildResult] ?: 'warning'
-                slackSend channel: 'cybergoat', color: color, message: "*${buildResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+                slackSend channel: 'jenkinscicd', color: color, message: "*${buildResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
             }
         }
     }
