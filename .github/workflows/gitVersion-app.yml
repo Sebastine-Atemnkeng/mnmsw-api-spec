@@ -1,0 +1,34 @@
+name: Bump Version and Tag
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Ensure we have the full history for GitVersion to work
+
+      # Setup GitVersion
+      - uses: gittools/actions/gitversion/setup@v0.9
+        with:
+          gitversion-version: 5.1.1
+
+      # Run GitVersion
+      - name: Run GitVersion
+        id: gitversion
+        run: gitversion /output json /showvariable SemVer
+
+      # Create a Git tag for the new version
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$(gitversion.SemVer)" -m "Version $(gitversion.SemVer)"
+          git push origin "v$(gitversion.SemVer)"
