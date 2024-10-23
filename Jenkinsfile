@@ -2,21 +2,20 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Enter the branch name (e.g., bugfix)') // Default to 'main'
+        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Enter the branch name (e.g., bugfix)')
     }
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        DOCKER_REPO = "sebastine/project-tsukinome-${params.BRANCH_NAME}"  // Docker repo based on branch name
+        DOCKER_REPO = "sebastine/project-tsukinome-${params.BRANCH_NAME}"  
         APP_NAME = 'users'
-        IMAGE_TAG = 'latest'
+        IMAGE_TAG = 'latest'  // Or use dynamic tagging as mentioned above
     }
 
     stages {
         stage('Checkout') {
             steps {
                 script {
-                    // Checkout the code using the provided branch name
                     checkout([$class: 'GitSCM', branches: [[name: "*/${params.BRANCH_NAME}"]], userRemoteConfigs: [[url: 'https://github.com/Sebastine-Atemnkeng/mnmsw-api-spec.git']]])
                 }
             }
@@ -25,7 +24,6 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh """
-                    # Installing dependencies for the users feature
                     python3 -m venv venv
                     . venv/bin/activate
                     pip install -r requirements.txt                
@@ -36,14 +34,13 @@ pipeline {
         stage('Unit Test') {
             steps {
                 sh """
-                    # Running unit tests with pytest (or your test framework)
                     . venv/bin/activate
                     pytest --junitxml=test-results.xml
                 """
             }
             post {
                 always {
-                    junit 'test-results.xml'  // Publishing test results
+                    junit 'test-results.xml'
                 }
             }
         }
@@ -69,20 +66,22 @@ pipeline {
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    // Defining the Docker repo name dynamically using the branch name
-                    def dockerRepo = "sebastine/project-tsukinome-${params.BRANCH_NAME}:${BUILD_NUMBER}"
+                    try {
+                        def dockerRepo = "${DOCKER_REPO}:${IMAGE_TAG}"
+                        echo "Building Docker image: ${dockerRepo}"
+                        def dockerImage = docker.build(dockerRepo)
 
-                    // Build Docker image
-                    sh "docker build -t ${dockerRepo} ."
+                        echo "Pushing Docker image to registry"
+                        docker.withRegistry('https://registry.hub.docker.com', DOCKERHUB_CREDENTIALS) {
+                            dockerImage.push()
+                        }
 
-                    // Push Docker image to the registry
-                    def dockerImage = docker.image("${dockerRepo}")
-                    docker.withRegistry('https://index.docker.io/v1/', "dockerhub") {
-                        dockerImage.push()
+                        echo "Cleaning up local Docker image"
+                        sh "docker rmi ${dockerRepo} || true"
+                    } catch (Exception e) {
+                        echo "Error during Docker image push: ${e.message}"
+                        currentBuild.result = 'FAILURE'
                     }
-
-                    // Optionally clean up the local Docker image
-                    sh "docker rmi ${dockerRepo} || true"
                 }
             }
         }
@@ -92,9 +91,9 @@ pipeline {
         always {
             script {
                 def colorMap = [
-                    SUCCESS: 'good',     // Green
-                    FAILURE: 'danger',   // Red
-                    UNSTABLE: 'warning'  // Yellow (you can add more statuses as needed)
+                    SUCCESS: 'good',
+                    FAILURE: 'danger',
+                    UNSTABLE: 'warning'
                 ]
                 def buildResult = currentBuild.currentResult
                 def color = colorMap[buildResult] ?: 'warning'
