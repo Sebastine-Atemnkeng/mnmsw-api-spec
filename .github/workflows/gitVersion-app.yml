@@ -4,21 +4,23 @@ on:
   push:
     branches:
       - main
+      - features
       - release/*
+      - bugfix
 
 jobs:
   bump-version:
     runs-on: ubuntu-latest
     steps:
-      # Checkout code
+      # Checkout the code
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0  # Ensure we have the full history for GitVersion to work
 
-      # Setup GitVersion
+      # Setup GitVersion with the correct versionSpec parameter
       - uses: gittools/actions/gitversion/setup@v0.9
         with:
-          gitversion-version: 5.1.1
+          versionSpec: '5.1.1'
 
       # Run GitVersion
       - name: Run GitVersion
