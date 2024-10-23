@@ -12,41 +12,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the code
-      - name: Checkout Code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v1.0.0
+      - uses: actions/setup-setup-dotnet@v1
+      - uses: actions/setup-gitversion@v1.0.0
         with:
-          fetch-depth: 0  # Ensure the full history is available for GitVersion to work properly
-
-      # Set up .NET SDK
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: '6.0.x'  # Specify the version of .NET SDK you need
-
-      # Set up GitVersion
-      - name: Set up GitVersion
-        uses: gittools/actions/gitversion/setup@v0.9
-        with:
-          versionSpec: '5.1.1'  # Specify the GitVersion version
-
-      # Run GitVersion to get the semantic version
-      - name: Run GitVersion
-        id: gitversion
-        run: |
-          GITVERSION=$(gitversion /output json /showvariable SemVer)
-          echo "GitVersion: $GITVERSION"
-          echo "GITVERSION=$GITVERSION" >> $GITHUB_ENV  # Set the GITVERSION as an environment variable
-
-      # Configure Git to use the Personal Access Token for authentication
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/Sebastine-Atemnkeng/mnmsw-api-spec.git
-
-      # Create and push the new tag
-      - name: Create and Push Tag
-        run: |
-          git tag -a "v${{ env.GITVERSION }}" -m "Version ${{ env.GITVERSION }}"
-          git push origin "v${{ env.GITVERSION }}"
+          gitversion-version: 5.1.1
+      - run: GitVersion
