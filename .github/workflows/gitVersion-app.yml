@@ -17,6 +17,12 @@ jobs:
         with:
           fetch-depth: 0  # Ensure the full history is available for GitVersion to work properly
 
+      # Install .NET SDK (required to install GitVersion)
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '6.0.x'
+
       # Install GitVersion
       - name: Install GitVersion
         run: |
@@ -34,7 +40,7 @@ jobs:
         env:
           DOTNET_ROOT: /home/runner/.dotnet
           PATH: /home/runner/.dotnet/tools:$PATH
-      
+
       # Configure Git to use the Personal Access Token for authentication
       - name: Configure Git
         run: |
