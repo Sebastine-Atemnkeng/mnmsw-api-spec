@@ -7,28 +7,46 @@ on:
       - features
       - release/*
       - bugfix
-permissions:
-  contents: read # for checkout
+      
 jobs:
-  release:
-    permissions:
-      contents: write # to be able to publish a GitHub release
-      issues: write # to be able to comment on released issues
-      pull-requests: write # to be able to comment on released pull requests
-      id-token: write # to enable use of OIDC for npm provenance
-    name: release
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
-      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
+      # Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v2
         with:
-          cache: npm
-          node-version: lts/*
-      - run: npm clean-install
-      - run: corepack npm audit signatures
-      # pinned version updated automatically by Renovate.
-      # details at https://semantic-release.gitbook.io/semantic-release/usage/installation#global-installation
-      - run: npx semantic-release@21.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.SEMANTIC_RELEASE_BOT_NPM_TOKEN }}
+          fetch-depth: 0  # Ensure the full history is available for GitVersion to work properly
+
+      # Set up .NET SDK
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '6.0.x'  # Specify the version of .NET SDK you need
+
+      # Set up GitVersion
+      - name: Set up GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9
+        with:
+          versionSpec: '5.1.1'  # Specify the GitVersion version
+
+      # Run GitVersion to get the semantic version
+      - name: Run GitVersion
+        id: gitversion
+        run: |
+          GITVERSION=$(gitversion /output json /showvariable SemVer)
+          echo "GitVersion: $GITVERSION"
+          echo "GITVERSION=$GITVERSION" >> $GITHUB_ENV  # Set the GITVERSION as an environment variable
+
+      # Configure Git to use the Personal Access Token for authentication
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/Sebastine-Atemnkeng/mnmsw-api-spec.git
+
+      # Create and push the new tag
+      - name: Create and Push Tag
+        run: |
+          git tag -a "v${{ env.GITVERSION }}" -m "Version ${{ env.GITVERSION }}"
+          git push origin "v${{ env.GITVERSION }}"
