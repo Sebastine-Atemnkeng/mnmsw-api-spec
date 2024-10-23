@@ -34,12 +34,13 @@ pipeline {
             steps {
                 sh """
                     # Running unit tests with pytest (or your test framework)
+                    . venv/bin/activate
                     pytest --junitxml=test-results.xml
                 """
             }
             post {
                 always {
-                    junit 'test-results.xml'  // Publishing test results
+                    junit '**/test-results.xml'  // Publishing test results
                 }
             }
         }
