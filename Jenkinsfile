@@ -67,23 +67,24 @@ pipeline {
                 script {
                     // Define the Docker repo name dynamically using the branch name
                     withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
-                    def dockerRepo = "sebastine/project-tsukinome-${params.BRANCH_NAME}:${BUILD_NUMBER}"
+                        def dockerRepo = "sebastine/project-tsukinome-${params.BRANCH_NAME}:${BUILD_NUMBER}"
 
-                    try {
-                        // Log in to Docker Hub
-                        sh "echo \$DOCKERHUB_PASSWORD | docker login -u \$DOCKERHUB_USERNAME --password-stdin"
+                        try {
+                            // Log in to Docker Hub
+                            sh "echo \$DOCKERHUB_PASSWORD | docker login -u \$DOCKERHUB_USERNAME --password-stdin"
 
-                        // Build Docker image
-                        dockerImage = docker.build("${registry}:${BUILD_NUMBER}")
+                            // Build Docker image
+                            dockerImage = docker.build("${registry}:${BUILD_NUMBER}")
 
-                        // Push Docker image to the registry
-                        dockerImage.push()
+                            // Push Docker image to the registry
+                            dockerImage.push()
 
-                        // Optionally clean up the local Docker image
-                        sh "docker rmi ${registry}:${BUILD_NUMBER} || true"
-                    } catch (Exception e) {
-                        echo "Error during Docker image push: ${e.message}"
-                        currentBuild.result = 'FAILURE'
+                            // Optionally clean up the local Docker image
+                            sh "docker rmi ${registry}:${BUILD_NUMBER} || true"
+                        } catch (Exception e) {
+                            echo "Error during Docker image push: ${e.message}"
+                            currentBuild.result = 'FAILURE'
+                        }
                     }
                 }
             }
