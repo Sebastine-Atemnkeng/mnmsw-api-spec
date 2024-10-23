@@ -15,33 +15,33 @@ jobs:
       # Checkout the code
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # Ensure we have the full history for GitVersion to work
+          fetch-depth: 0  # Ensure the full history is available for GitVersion to work properly
 
-      # Setup .NET because GitVersion relies on .NET Core SDK
+      # Setup .NET for GitVersion to work
       - uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '5.x'  # Ensure GitVersion can run
+          dotnet-version: '5.x'
 
-      # Setup GitVersion correctly
+      # Setup GitVersion
       - uses: gittools/actions/gitversion/setup@v0.9
         with:
           versionSpec: '5.1.1'
 
-      # Run GitVersion and capture the semantic version
+      # Run GitVersion to get the semantic version
       - name: Run GitVersion
         id: gitversion
         run: |
-          export GITVERSION=$(gitversion /output json /showvariable SemVer)
+          GITVERSION=$(gitversion /output json /showvariable SemVer)
           echo "GitVersion: $GITVERSION"
-
-      # Authenticate using the Personal Access Token (PAT)
-      - name: Set up Git credentials
+      
+      # Configure Git to use the Personal Access Token for authentication
+      - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ GITHUB_TOKEN }}@github.com/Sebastine-Atemnkeng/mnmsw-api-spec.git
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/Sebastine-Atemnkeng/mnmsw-api-spec.git
 
-      # Create and push tag with the semantic version
+      # Create and push the new tag
       - name: Create and push tag
         run: |
           git tag -a "v$GITVERSION" -m "Version $GITVERSION"
