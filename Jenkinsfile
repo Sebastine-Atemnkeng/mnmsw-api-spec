@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        DOCKER_REPO = "sebastine/project-tsukinome-${env.BRANCH_NAME}"  // Docker repo based on branch name
         APP_NAME = 'users'
         IMAGE_TAG = 'latest'
     }
