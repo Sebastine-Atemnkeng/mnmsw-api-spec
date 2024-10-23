@@ -1,9 +1,13 @@
 pipeline {
     agent any
 
+    parameters {
+        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Enter the branch name')
+    }
+
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        DOCKER_REPO = "sebastine/project-tsukinome-${env.BRANCH_NAME}"  // Docker repo based on branch name
+        DOCKER_REPO = "sebastine/project-tsukinome-${params.BRANCH_NAME}"  // Docker repo based on branch name
         APP_NAME = 'users'
         IMAGE_TAG = 'latest'
     }
@@ -12,9 +16,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    // Checkout the code and capture the branch name
-                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/Sebastine-Atemnkeng/mnmsw-api-spec.git']]])
-                    env.BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim().toLowerCase()
+                    // Checkout the code using the provided branch name
+                    checkout([$class: 'GitSCM', branches: [[name: "*/${params.BRANCH_NAME}"]], userRemoteConfigs: [[url: 'https://github.com/Sebastine-Atemnkeng/mnmsw-api-spec.git']]])
                 }
             }
         }
@@ -66,8 +69,8 @@ pipeline {
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    // Defining the Docker repo name dynamically using the lowercase branch name
-                    def dockerRepo = "sebastine/project-tsukinome-${env.BRANCH_NAME}:${BUILD_NUMBER}"
+                    // Defining the Docker repo name dynamically using the branch name
+                    def dockerRepo = "sebastine/project-tsukinome-${params.BRANCH_NAME}:${BUILD_NUMBER}"
 
                     // Build Docker image
                     sh "docker build -t ${dockerRepo} ."
