@@ -67,15 +67,21 @@ pipeline {
             steps {
                 script {
                     try {
-                        def dockerRepo = "${DOCKER_REPO}:${IMAGE_TAG}"
+                        // Define the Docker repo name dynamically using the branch name
+                        def dockerRepo = "sebastine/project-tsukinome-${params.BRANCH_NAME}:${BUILD_NUMBER}"
+
+                        // Build Docker image
                         echo "Building Docker image: ${dockerRepo}"
                         def dockerImage = docker.build(dockerRepo)
 
+                        // Push Docker image to the registry
                         echo "Pushing Docker image to registry"
-                        docker.withRegistry('https://registry.hub.docker.com', DOCKERHUB_CREDENTIALS) {
+                        docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {                            dockerImage.push()
                             dockerImage.push()
                         }
+                        echo "Successfully pushed Docker image: ${dockerRepo}"
 
+                        // Optionally clean up the local Docker image
                         echo "Cleaning up local Docker image"
                         sh "docker rmi ${dockerRepo} || true"
                     } catch (Exception e) {
