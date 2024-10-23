@@ -17,15 +17,13 @@ jobs:
         with:
           fetch-depth: 0  # Ensure the full history is available for GitVersion to work properly
 
-      # Setup .NET for GitVersion to work
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '5.x'
-
-      # Setup GitVersion
-      - uses: gittools/actions/gitversion/setup@v0.9
-        with:
-          versionSpec: '5.1.1'
+      # Install GitVersion
+      - name: Install GitVersion
+        run: |
+          dotnet tool install --global GitVersion.Tool --version 5.*
+        env:
+          DOTNET_ROOT: /home/runner/.dotnet
+          PATH: /home/runner/.dotnet/tools:$PATH
 
       # Run GitVersion to get the semantic version
       - name: Run GitVersion
@@ -33,6 +31,9 @@ jobs:
         run: |
           GITVERSION=$(gitversion /output json /showvariable SemVer)
           echo "GitVersion: $GITVERSION"
+        env:
+          DOTNET_ROOT: /home/runner/.dotnet
+          PATH: /home/runner/.dotnet/tools:$PATH
       
       # Configure Git to use the Personal Access Token for authentication
       - name: Configure Git
