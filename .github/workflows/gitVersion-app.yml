@@ -17,20 +17,27 @@ jobs:
         with:
           fetch-depth: 0  # Ensure we have the full history for GitVersion to work
 
-      # Setup GitVersion with the correct versionSpec parameter
+      # Setup .NET because GitVersion relies on .NET Core SDK
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.x'  # Ensure GitVersion can run
+
+      # Setup GitVersion correctly
       - uses: gittools/actions/gitversion/setup@v0.9
         with:
           versionSpec: '5.1.1'
 
-      # Run GitVersion
+      # Run GitVersion and capture the semantic version
       - name: Run GitVersion
         id: gitversion
-        run: gitversion /output json /showvariable SemVer
+        run: |
+          export GITVERSION=$(gitversion /output json /showvariable SemVer)
+          echo "GitVersion: $GITVERSION"
 
-      # Create a Git tag for the new version
+      # Create and push tag with the semantic version
       - name: Create and push tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v$(gitversion.SemVer)" -m "Version $(gitversion.SemVer)"
-          git push origin "v$(gitversion.SemVer)"
+          git tag -a "v$GITVERSION" -m "Version $GITVERSION"
+          git push origin "v$GITVERSION"
