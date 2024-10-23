@@ -9,6 +9,7 @@ pipeline {
         registryCredential = 'dockerhub'
         registry = "sebastine/project-tsukinome-${params.BRANCH_NAME}"
         dockerImage = ''
+        newVersion = ''  // Declare newVersion here so it's globally accessible
     }
 
     stages {
