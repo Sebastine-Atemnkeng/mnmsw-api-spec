@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Enter the branch name (e.g., bugfix)')
+        string(name: 'BRANCH_NAME', defaultValue: 'release', description: 'Enter the branch name (e.g., bugfix)')
     }
 
     environment {
         registryCredential = 'dockerhub'
-        registry = "sebastine/project-tsukinome-${params.BRANCH_NAME}"  
-        dockerImage = ''  // Or use dynamic tagging as mentioned above
+        registry = "sebastine/project-tsukinome-${params.BRANCH_NAME}"
+        dockerImage = ''
     }
 
     stages {
@@ -20,12 +20,29 @@ pipeline {
             }
         }
 
+        stage('Read Version') {
+            steps {
+                script {
+                    // Read the version from version.txt
+                    def version = readFile('version.txt').trim()
+                    echo "Current version: ${version}"
+
+                    // Increment version based on commit (can be automated or predefined logic)
+                    def newVersion = incrementVersion(version, 'patch') // You can use 'major', 'minor', or 'patch'
+                    echo "New version: ${newVersion}"
+
+                    // Write new version back to version.txt
+                    writeFile file: 'version.txt', text: newVersion
+                }
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
                 sh """
                     python3 -m venv venv
                     . venv/bin/activate
-                    pip install -r requirements.txt                
+                    pip install -r requirements.txt
                 """
             }
         }
@@ -44,47 +61,23 @@ pipeline {
             }
         }
 
-        stage('Code Analysis') {
-            environment {
-                scannerHome = tool name: 'SONAR_TOKEN'
-            }
-            steps {
-                script {
-                    withSonarQubeEnv('SONAR_TOKEN') {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                                -Dsonar.projectKey=CSN \
-                                -Dsonar.projectName=CSN \
-                                -Dsonar.sources=.
-                        """
-                    }
-                }
-            }
-        }
-
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    // Define the Docker repo name dynamically using the branch name
                     withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
-                        def dockerRepo = "sebastine/project-tsukinome-${params.BRANCH_NAME}:${BUILD_NUMBER}"
+                        def dockerRepo = "sebastine/project-tsukinome-${params.BRANCH_NAME}:${newVersion}"
 
-                        try {
-                            // Log in to Docker Hub
-                            sh "echo \$DOCKERHUB_PASSWORD | docker login -u \$DOCKERHUB_USERNAME --password-stdin"
+                        // Log in to Docker Hub
+                        sh "echo \$DOCKERHUB_PASSWORD | docker login -u \$DOCKERHUB_USERNAME --password-stdin"
 
-                            // Build Docker image
-                            dockerImage = docker.build("${registry}:${BUILD_NUMBER}")
+                        // Build Docker image
+                        dockerImage = docker.build("${registry}:${newVersion}")
 
-                            // Push Docker image to the registry
-                            dockerImage.push()
+                        // Push Docker image to the registry
+                        dockerImage.push()
 
-                            // Optionally clean up the local Docker image
-                            sh "docker rmi ${registry}:${BUILD_NUMBER} || true"
-                        } catch (Exception e) {
-                            echo "Error during Docker image push: ${e.message}"
-                            currentBuild.result = 'FAILURE'
-                        }
+                        // Optionally clean up the local Docker image
+                        sh "docker rmi ${registry}:${newVersion} || true"
                     }
                 }
             }
@@ -105,4 +98,24 @@ pipeline {
             }
         }
     }
+}
+
+def incrementVersion(String version, String type) {
+    def parts = version.tokenize('.')
+    def major = parts[0].toInteger()
+    def minor = parts[1].toInteger()
+    def patch = parts[2].toInteger()
+
+    if (type == 'major') {
+        major++
+        minor = 0
+        patch = 0
+    } else if (type == 'minor') {
+        minor++
+        patch = 0
+    } else if (type == 'patch') {
+        patch++
+    }
+
+    return "${major}.${minor}.${patch}"
 }
