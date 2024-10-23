@@ -7,8 +7,8 @@ pipeline {
 
     environment {
         registryCredential = 'dockerhub'
-        DOCKER_REPO = "sebastine/project-tsukinome-${params.BRANCH_NAME}"  
-        IMAGE_TAG = ''  // Or use dynamic tagging as mentioned above
+        registry = "sebastine/project-tsukinome-${params.BRANCH_NAME}"  
+        dockerImage = ''  // Or use dynamic tagging as mentioned above
     }
 
     stages {
@@ -66,20 +66,21 @@ pipeline {
             steps {
                 script {
                     // Define the Docker repo name dynamically using the branch name
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
                     def dockerRepo = "sebastine/project-tsukinome-${params.BRANCH_NAME}:${BUILD_NUMBER}"
 
                     try {
                         // Log in to Docker Hub
-                        sh "echo ${dockerhub} | docker login -u ${dockerhub} --password-stdin"
+                        sh "echo \$DOCKERHUB_PASSWORD | docker login -u \$DOCKERHUB_USERNAME --password-stdin"
 
                         // Build Docker image
-                        sh "docker build -t ${dockerRepo} ."
+                        dockerImage = docker.build("${registry}:${BUILD_NUMBER}")
 
                         // Push Docker image to the registry
-                        sh "docker push ${dockerRepo}"
+                        dockerImage.push()
 
                         // Optionally clean up the local Docker image
-                        sh "docker rmi ${dockerRepo} || true"
+                        sh "docker rmi ${registry}:${BUILD_NUMBER} || true"
                     } catch (Exception e) {
                         echo "Error during Docker image push: ${e.message}"
                         currentBuild.result = 'FAILURE'
