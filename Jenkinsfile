@@ -71,7 +71,7 @@ pipeline {
 
                     try {
                         // Log in to Docker Hub
-                        sh "echo ${dockerhub} | docker login -u ${dockerhub} --password-stdin"
+                        sh "echo ${DOCKERHUB_CREDENTIALS} | docker login -u ${DOCKERHUB_CREDENTIALS} --password-stdin"
 
                         // Build Docker image
                         sh "docker build -t ${dockerRepo} ."
