@@ -44,28 +44,23 @@ pipeline {
             }
         }
 
-        stage('Static Code Analysis') {
+        stage('Code Analysis') {
             environment {
-                SONAR_URL = "http://192.168.0.142:9000/"
+                scannerHome = tool name: 'SONAR_TOKEN'
             }
             steps {
-                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                    withSonarQubeEnv('SonarQube') {
-                        sh 'sonar-scanner -Dsonar.projectKey=users-feature -Dsonar.host.url=${SONAR_URL} -Dsonar.login=${SONAR_TOKEN}'
+                script {
+                    withSonarQubeEnv('SONAR_TOKEN') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                                -Dsonar.projectKey=CSN \
+                                -Dsonar.projectName=CSN \
+                                -Dsonar.sources=.
+                        """
                     }
                 }
             }
         }
-
-        // Commented out the Quality Gate stage
-        /*
-        stage('Quality Gate') {
-            steps {
-                waitForQualityGate abortPipeline: true
-            }
-        }
-        */
-
         stage('Build and Push Docker Image') {
             environment {
                 DOCKER_IMAGE = "sebastine/project-tsukinome-${env.BRANCH_NAME}:${BUILD_NUMBER}"
