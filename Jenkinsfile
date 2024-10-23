@@ -6,10 +6,9 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        registryCredential = 'dockerhub'
         DOCKER_REPO = "sebastine/project-tsukinome-${params.BRANCH_NAME}"  
-        APP_NAME = 'users'
-        IMAGE_TAG = 'latest'  // Or use dynamic tagging as mentioned above
+        IMAGE_TAG = ''  // Or use dynamic tagging as mentioned above
     }
 
     stages {
