@@ -65,13 +65,13 @@ pipeline {
         stage('Build and Push Docker Image') {
             environment {
                 DOCKER_IMAGE = "sebastine/project-tsukinome-${env.BRANCH_NAME}:${BUILD_NUMBER}"
-                REGISTRY_CREDENTIALS = credentials('docker-cred')
+                REGISTRY_CREDENTIALS = credentials('dockerhub')
             }
             steps {
                 script {
                     sh 'docker build -t ${DOCKER_IMAGE} .'
                     def dockerImage = docker.image("${DOCKER_IMAGE}")
-                    docker.withRegistry('https://index.docker.io/v1/', "docker-cred") {
+                    docker.withRegistry('https://index.docker.io/v1/', "dockerhub") {
                         dockerImage.push()
                     }
                     // Optionally clean up
