@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Enter the branch name')
+        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Enter the branch name (e.g., bugfix)') // Default to 'main'
     }
 
     environment {
