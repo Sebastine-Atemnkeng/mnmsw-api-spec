@@ -9,6 +9,7 @@ pipeline {
         registryCredential = 'dockerhub'
         registry = "sebastine/project-tsukinome-${params.BRANCH_NAME}"  
         dockerImage = ''  // Or use dynamic tagging as mentioned above
+        GITHUB_TOKEN = credentials('github-token') // GitHub token for pulling version information
     }
 
     stages {
@@ -62,25 +63,35 @@ pipeline {
             }
         }
 
+        stage('Get Version') {
+            steps {
+                script {
+                    // Retrieve the latest version from Git
+                    VERSION = sh(script: "git describe --tags --abbrev=0", returnStdout: true).trim()
+                    echo "Version is: ${VERSION}"
+                }
+            }
+        }
+
         stage('Build and Push Docker Image') {
             steps {
                 script {
                     // Define the Docker repo name dynamically using the branch name
                     withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
-                        def dockerRepo = "sebastine/project-tsukinome-${params.BRANCH_NAME}:${BUILD_NUMBER}"
+                        def dockerRepo = "sebastine/project-tsukinome-${params.BRANCH_NAME}:${VERSION}"
 
                         try {
                             // Log in to Docker Hub
                             sh "echo \$DOCKERHUB_PASSWORD | docker login -u \$DOCKERHUB_USERNAME --password-stdin"
 
                             // Build Docker image
-                            dockerImage = docker.build("${registry}:${BUILD_NUMBER}")
+                            dockerImage = docker.build("${registry}:${VERSION}")
 
                             // Push Docker image to the registry
                             dockerImage.push()
 
                             // Optionally clean up the local Docker image
-                            sh "docker rmi ${registry}:${BUILD_NUMBER} || true"
+                            sh "docker rmi ${registry}:${VERSION} || true"
                         } catch (Exception e) {
                             echo "Error during Docker image push: ${e.message}"
                             currentBuild.result = 'FAILURE'
@@ -101,7 +112,7 @@ pipeline {
                 ]
                 def buildResult = currentBuild.currentResult
                 def color = colorMap[buildResult] ?: 'warning'
-                slackSend channel: 'jenkinscicd', color: color, message: "*${buildResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+                slackSend channel: 'jenkinscicd', color: color, message: "*${buildResult}:* Job ${env.JOB_NAME} build ${VERSION} \n More info at: ${env.BUILD_URL}"
             }
         }
     }
