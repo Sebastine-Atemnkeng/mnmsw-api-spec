@@ -8,7 +8,8 @@ def home():
         {"manager": "Oren Nahzabi", "name": "Sebastien Atemnkeng", "title": "Senior DevOps Engineer"},
         {"manager": "Oren Nahzabi", "name": "John Doe", "title": "DevOps Engineer"},
         {"manager": "Oren Nahzabi", "name": "Jane Smith", "title": "Junior DevOps Engineer"},
-        {"manager": "Oren Nahzabi", "name": "Priscille", "title": "Senior Account Executive"}
+        {"manager": "Oren Nahzabi", "name": "Priscille", "title": "Senior Account Executive"},
+        {"manager": "Oren Nahzabi", "name": "Motopamba", "title": "Senior Java Developer"}
     ]
     return render_template('users.html', users=users)
 
