@@ -45,23 +45,23 @@ pipeline {
             }
         }
 
-        // stage('Code Analysis') {
-        //     environment {
-        //         scannerHome = tool name: 'SONAR_TOKEN'
-        //     }
-        //     steps {
-        //         script {
-        //             withSonarQubeEnv('SONAR_TOKEN') {
-        //                 sh """
-        //                     ${scannerHome}/bin/sonar-scanner \
-        //                         -Dsonar.projectKey=CSN \
-        //                         -Dsonar.projectName=CSN \
-        //                         -Dsonar.sources=.
-        //                 """
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Code Analysis') {
+            environment {
+                scannerHome = tool name: 'SONAR_TOKEN'
+            }
+            steps {
+                script {
+                    withSonarQubeEnv('SONAR_TOKEN') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                                -Dsonar.projectKey=CSN \
+                                -Dsonar.projectName=CSN \
+                                -Dsonar.sources=.
+                        """
+                    }
+                }
+            }
+        }
 
         stage('Get Version') {
             steps {
