@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'BRANCH_NAME', defaultValue: 'release', description: 'Enter the branch name (e.g., bugfix)')
+        string(name: 'BRANCH_NAME', defaultValue: 'bugFix', description: 'Enter the branch name (e.g., bugfix)')
     }
 
     environment {
